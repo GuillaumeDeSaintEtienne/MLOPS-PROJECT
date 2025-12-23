@@ -14,7 +14,7 @@ def upload_files_to_s3():
     # Récupération des secrets injectés par GitHub Actions
     access_key = os.environ.get('AWS_ACCESS_KEY_ID')
     secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
-    region = os.environ.get('AWS_REGION', 'eu-north-1')
+    region = os.environ.get('AWS_REGION')
 
     if not access_key or not secret_key:
         logging.error("Clés AWS introuvables dans l'environnement.")
