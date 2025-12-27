@@ -1,35 +1,43 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import Home from "./Home.jsx";
+import Eligibility from "./Eligibility.jsx";
+import Simulator from "./Simulator.jsx";
+import { DataProvider } from "./DataContext.jsx";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <DataProvider>
+      <Router>
+        <div className="flex min-h-screen bg-gray-100">
+          {/* Sidebar - Equivalent to Streamlit Sidebar */}
+          <nav className="w-64 bg-white shadow-md p-6">
+            <h2 className="text-xl font-bold mb-8 text-gray-800">🏦 Credit Score AI</h2>
+            <ul className="space-y-4">
+              <li>
+                <Link title="Home" to="/" className="text-blue-600 hover:underline">🏠 Home</Link>
+              </li>
+              <li>
+                <Link title="Eligibility" to="/eligibility" className="text-blue-600 hover:underline">✅ Eligibility</Link>
+              </li>
+              <li>
+                <Link title="Simulator" to="/simulator" className="text-blue-600 hover:underline">⚡ Simulator</Link>
+              </li>
+            </ul>
+          </nav>
+
+          {/* Main Content Area */}
+          <main className="flex-1 p-10">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/eligibility" element={<Eligibility />} />
+              <Route path="/simulator" element={<Simulator />} />
+            </Routes>
+          </main>
+        </div>
+      </Router>
+    </DataProvider>
+  );
 }
 
-export default App
+export default App;
