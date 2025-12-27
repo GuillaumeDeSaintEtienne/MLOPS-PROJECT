@@ -8,7 +8,9 @@ router = APIRouter()
 def predict_score(data: CreditScoreInput):
     try:
         prediction = make_prediction(data)
-        return {"credit_score": str(prediction)}
+        return {"credit_score": str(prediction)} 
+        
     except Exception as e:
-        # If model is missing or data is wrong, return 500 or 400
+        import traceback
+        traceback.print_exc() 
         raise HTTPException(status_code=500, detail=str(e))

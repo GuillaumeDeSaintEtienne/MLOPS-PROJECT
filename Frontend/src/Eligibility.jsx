@@ -23,45 +23,115 @@ const InputField = ({ label, value, onChange, type = "number", prefix }) => (
 const Eligibility = () => {
     const { setUserData, setResult, result } = useData();
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    // 1. STATE: Only the 6 fields the user sees
     const [form, setForm] = useState({
-        annual_income: 50000,
-        monthly_salary: 4000,
-        credit_age: 5.0,
-        outstanding_debt: 1000,
-        num_bank_accounts: 2
+        Annual_Income: 50000,
+        Monthly_Inhand_Salary: 4000,
+        Outstanding_Debt: 1000,
+        Credit_History_Age: 5,     // In Years
+        Num_Bank_Accounts: 2,
+        Num_Credit_Cards: 3
     });
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        setTimeout(() => {
-            const isGood = form.annual_income > 40000 && form.outstanding_debt < 2000;
-            const status = isGood ? "Good (Approuvé)" : "Standard (Risqué)";
+        setError(null);
+
+        // CLEANER PAYLOAD: We only send what we ask for.
+        // The Backend handles the defaults for the rest.
+        const payload = {
+            Annual_Income: parseFloat(form.Annual_Income),
+            Monthly_Inhand_Salary: parseFloat(form.Monthly_Inhand_Salary),
+            Num_Bank_Accounts: parseInt(form.Num_Bank_Accounts),
+            Num_Credit_Cards: parseInt(form.Num_Credit_Cards),
+            Outstanding_Debt: parseFloat(form.Outstanding_Debt),
+            // Convert Years to Months before sending
+            Credit_History_Age: parseFloat(form.Credit_History_Age) * 12 
+        };
+
+        try {
+            const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
+            const response = await fetch(`${apiUrl}/predict`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error("Erreur serveur lors de la prédiction");
+            }
+
+            const data = await response.json();
+            
+            // 4. HANDLE RESULT
+            // Assuming API returns { "credit_score": "Good" } or similar
+            const prediction = data.credit_score; 
+            const isGood = prediction === "Good" || prediction === "Standard"; // Adjust logic based on your model output
+            
             setUserData(form);
-            setResult({ label: status, isApproved: isGood });
+            setResult({ 
+                label: prediction, 
+                isApproved: isGood 
+            });
+
+        } catch (err) {
+            console.error(err);
+            setError("Impossible de contacter l'IA. Vérifiez que le backend tourne.");
+        } finally {
             setLoading(false);
-        }, 1000);
+        }
     };
 
     return (
         <div className="animate-fade-in">
             <div className="border-b pb-4 mb-6">
                 <h1 className="text-3xl font-bold text-gray-800">✅ Vérification d'Éligibilité</h1>
-                <p className="text-gray-500 mt-2">Remplissez le formulaire pour obtenir une décision IA immédiate.</p>
+                <p className="text-gray-500 mt-2">Remplissez ces 6 critères clés pour une décision IA immédiate.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Colonne Gauche */}
                 <div className="space-y-2">
-                    <InputField label="Revenu Annuel ($)" value={form.annual_income} prefix="$" onChange={(e) => setForm({...form, annual_income: +e.target.value})} />
-                    <InputField label="Salaire Mensuel ($)" value={form.monthly_salary} prefix="$" onChange={(e) => setForm({...form, monthly_salary: +e.target.value})} />
-                    <InputField label="Âge Historique Crédit (Années)" value={form.credit_age} onChange={(e) => setForm({...form, credit_age: +e.target.value})} />
+                    <InputField 
+                        label="Revenu Annuel ($)" 
+                        value={form.Annual_Income} 
+                        prefix="$" 
+                        onChange={(e) => setForm({...form, Annual_Income: e.target.value})} 
+                    />
+                    <InputField 
+                        label="Salaire Mensuel Net ($)" 
+                        value={form.Monthly_Inhand_Salary} 
+                        prefix="$" 
+                        onChange={(e) => setForm({...form, Monthly_Inhand_Salary: e.target.value})} 
+                    />
+                    <InputField 
+                        label="Âge Historique Crédit (Années)" 
+                        value={form.Credit_History_Age} 
+                        onChange={(e) => setForm({...form, Credit_History_Age: e.target.value})} 
+                    />
                 </div>
 
                 {/* Colonne Droite */}
                 <div className="space-y-2">
-                    <InputField label="Dette Totale ($)" value={form.outstanding_debt} prefix="$" onChange={(e) => setForm({...form, outstanding_debt: +e.target.value})} />
-                    <InputField label="Nombre de comptes bancaires" value={form.num_bank_accounts} onChange={(e) => setForm({...form, num_bank_accounts: +e.target.value})} />
+                    <InputField 
+                        label="Dette Totale ($)" 
+                        value={form.Outstanding_Debt} 
+                        prefix="$" 
+                        onChange={(e) => setForm({...form, Outstanding_Debt: e.target.value})} 
+                    />
+                    <InputField 
+                        label="Nombre de Cartes de Crédit" 
+                        value={form.Num_Credit_Cards} 
+                        onChange={(e) => setForm({...form, Num_Credit_Cards: e.target.value})} 
+                    />
+                    <InputField 
+                        label="Nombre de Comptes Bancaires" 
+                        value={form.Num_Bank_Accounts} 
+                        onChange={(e) => setForm({...form, Num_Bank_Accounts: e.target.value})} 
+                    />
                     
                     <div className="pt-6">
                         <button 
@@ -78,11 +148,18 @@ const Eligibility = () => {
                                     </svg>
                                     Analyse en cours...
                                 </span>
-                            ) : "Lancer la prédiction"}
+                            ) : "Lancer la prédiction IA"}
                         </button>
                     </div>
                 </div>
             </form>
+
+            {/* Zone d'Erreur */}
+            {error && (
+                <div className="mt-4 p-4 text-red-700 bg-red-100 rounded-md border border-red-400">
+                    {error}
+                </div>
+            )}
 
             {/* Zone de Résultat */}
             {result.label && !loading && (
@@ -90,14 +167,14 @@ const Eligibility = () => {
                     result.isApproved ? 'bg-green-50 border-green-500 text-green-800' : 'bg-red-50 border-red-500 text-red-800'
                 }`}>
                     <h3 className="text-lg font-bold flex items-center">
-                        {result.isApproved ? '🎉 Félicitations' : '⚠️ Attention'}
+                        {result.isApproved ? '🎉 Félicitations' : '⚠️ Risque Détecté'}
                     </h3>
                     <p className="mt-2 text-lg">
-                        Résultat du modèle : <strong className="text-2xl ml-2">{result.label}</strong>
+                        Score de Crédit Estimé : <strong className="text-2xl ml-2 uppercase">{result.label}</strong>
                     </p>
                     {!result.isApproved && (
                         <p className="mt-4 text-sm text-blue-700 underline cursor-pointer">
-                            Conseil : Allez sur le Simulateur pour voir comment améliorer ce score.
+                            Conseil : Essayez de réduire votre dette totale pour améliorer ce score.
                         </p>
                     )}
                 </div>
