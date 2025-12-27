@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
-from app.schemas import CreditScoreInput
-from app.model_service import make_prediction
+from Backend.app.schemas import CreditScoreInput
+from Backend.app.model_service import make_prediction
 
 router = APIRouter()
 

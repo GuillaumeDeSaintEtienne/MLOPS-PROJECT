@@ -1,15 +1,15 @@
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import router
-from app.model_service import load_model
+
+from Backend.app.routes import router 
+from Backend.app.model_service import load_model
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Credit Score API")
 
-# --- CORS Setup ---
 origins = ["http://localhost:8080", "http://localhost:3000"]
 app.add_middleware(
     CORSMiddleware,
@@ -18,7 +18,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 @app.get("/health")
 def health():
