@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useData } from './DataContext.jsx';
 
-const InputField = ({ label, value, onChange, type = "number", prefix }) => (
+// 1. IMPROVED COMPONENT: Accepts ...props to allow things like min="0"
+const InputField = ({ label, value, onChange, type = "number", prefix, ...props }) => (
     <div className="mb-4">
         <label className="block text-sm font-semibold text-gray-700 mb-2">{label}</label>
         <div className="relative rounded-md shadow-sm">
@@ -15,22 +16,24 @@ const InputField = ({ label, value, onChange, type = "number", prefix }) => (
                 className={`block w-full rounded-md border-0 py-2.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-500 sm:text-sm sm:leading-6 ${prefix ? 'pl-8' : 'pl-3'}`}
                 value={value}
                 onChange={onChange}
+                {...props} // Allows passing min, max, placeholder, etc.
             />
         </div>
     </div>
 );
 
 const Eligibility = () => {
-    const { setUserData, setResult, result } = useData();
+    // 2. GET USERDATA: We pull existing data from context
+    const { setUserData, setResult, result, userData } = useData();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // 1. STATE: Only the 6 fields the user sees
-    const [form, setForm] = useState({
+    // 3. PERSISTENCE: Initialize form with existing userData if available, otherwise defaults
+    const [form, setForm] = useState(userData || {
         Annual_Income: 50000,
         Monthly_Inhand_Salary: 4000,
         Outstanding_Debt: 1000,
-        Credit_History_Age: 5,     // In Years
+        Credit_History_Age: 5,     
         Num_Bank_Accounts: 2,
         Num_Credit_Cards: 3
     });
@@ -40,15 +43,13 @@ const Eligibility = () => {
         setLoading(true);
         setError(null);
 
-        // CLEANER PAYLOAD: We only send what we ask for.
-        // The Backend handles the defaults for the rest.
+        // Prepare Payload
         const payload = {
             Annual_Income: parseFloat(form.Annual_Income),
             Monthly_Inhand_Salary: parseFloat(form.Monthly_Inhand_Salary),
             Num_Bank_Accounts: parseInt(form.Num_Bank_Accounts),
             Num_Credit_Cards: parseInt(form.Num_Credit_Cards),
             Outstanding_Debt: parseFloat(form.Outstanding_Debt),
-            // Convert Years to Months before sending
             Credit_History_Age: parseFloat(form.Credit_History_Age) * 12 
         };
 
@@ -66,11 +67,11 @@ const Eligibility = () => {
 
             const data = await response.json();
             
-            // 4. HANDLE RESULT
-            // Assuming API returns { "credit_score": "Good" } or similar
+            // Handle Result
             const prediction = data.credit_score; 
-            const isGood = prediction === "Good" || prediction === "Standard"; // Adjust logic based on your model output
+            const isGood = prediction === "Good" || prediction === "Standard";
             
+            // Save to Context (Global State)
             setUserData(form);
             setResult({ 
                 label: prediction, 
@@ -86,7 +87,7 @@ const Eligibility = () => {
     };
 
     return (
-        <div className="animate-fade-in">
+        <div className="animate-fade-in max-w-5xl mx-auto p-4">
             <div className="border-b pb-4 mb-6">
                 <h1 className="text-3xl font-bold text-gray-800">✅ Vérification d'Éligibilité</h1>
                 <p className="text-gray-500 mt-2">Remplissez ces 6 critères clés pour une décision IA immédiate.</p>
@@ -99,17 +100,20 @@ const Eligibility = () => {
                         label="Revenu Annuel ($)" 
                         value={form.Annual_Income} 
                         prefix="$" 
+                        min="0"
                         onChange={(e) => setForm({...form, Annual_Income: e.target.value})} 
                     />
                     <InputField 
                         label="Salaire Mensuel Net ($)" 
                         value={form.Monthly_Inhand_Salary} 
                         prefix="$" 
+                        min="0"
                         onChange={(e) => setForm({...form, Monthly_Inhand_Salary: e.target.value})} 
                     />
                     <InputField 
                         label="Âge Historique Crédit (Années)" 
                         value={form.Credit_History_Age} 
+                        min="0"
                         onChange={(e) => setForm({...form, Credit_History_Age: e.target.value})} 
                     />
                 </div>
@@ -120,16 +124,19 @@ const Eligibility = () => {
                         label="Dette Totale ($)" 
                         value={form.Outstanding_Debt} 
                         prefix="$" 
+                        min="0"
                         onChange={(e) => setForm({...form, Outstanding_Debt: e.target.value})} 
                     />
                     <InputField 
                         label="Nombre de Cartes de Crédit" 
                         value={form.Num_Credit_Cards} 
+                        min="0"
                         onChange={(e) => setForm({...form, Num_Credit_Cards: e.target.value})} 
                     />
                     <InputField 
                         label="Nombre de Comptes Bancaires" 
                         value={form.Num_Bank_Accounts} 
+                        min="0"
                         onChange={(e) => setForm({...form, Num_Bank_Accounts: e.target.value})} 
                     />
                     
@@ -156,8 +163,8 @@ const Eligibility = () => {
 
             {/* Zone d'Erreur */}
             {error && (
-                <div className="mt-4 p-4 text-red-700 bg-red-100 rounded-md border border-red-400">
-                    {error}
+                <div className="mt-4 p-4 text-red-700 bg-red-100 rounded-md border border-red-400 animate-pulse">
+                    ⚠️ {error}
                 </div>
             )}
 
@@ -166,15 +173,25 @@ const Eligibility = () => {
                 <div className={`mt-8 p-6 rounded-lg border-l-4 shadow-sm animate-slide-up ${
                     result.isApproved ? 'bg-green-50 border-green-500 text-green-800' : 'bg-red-50 border-red-500 text-red-800'
                 }`}>
-                    <h3 className="text-lg font-bold flex items-center">
+                    <h3 className="text-xl font-bold flex items-center mb-2">
                         {result.isApproved ? '🎉 Félicitations' : '⚠️ Risque Détecté'}
                     </h3>
-                    <p className="mt-2 text-lg">
-                        Score de Crédit Estimé : <strong className="text-2xl ml-2 uppercase">{result.label}</strong>
-                    </p>
+                    
+                    <div className="flex items-center space-x-4">
+                        <div className="text-lg">
+                             Score de Crédit Estimé :
+                        </div>
+                        <div className={`px-4 py-1 rounded-full text-white font-bold text-sm tracking-wider uppercase shadow-sm ${
+                            result.label === 'Good' ? 'bg-green-600' : 
+                            result.label === 'Standard' ? 'bg-blue-600' : 'bg-red-600'
+                        }`}>
+                            {result.label}
+                        </div>
+                    </div>
+
                     {!result.isApproved && (
-                        <p className="mt-4 text-sm text-blue-700 underline cursor-pointer">
-                            Conseil : Essayez de réduire votre dette totale pour améliorer ce score.
+                        <p className="mt-4 text-sm text-blue-700 hover:text-blue-900 underline cursor-pointer transition-colors">
+                            💡 Conseil : Allez sur le Simulateur pour voir comment améliorer votre score.
                         </p>
                     )}
                 </div>
