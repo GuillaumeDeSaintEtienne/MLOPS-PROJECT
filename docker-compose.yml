@@ -1,6 +1,28 @@
 version: '3.8'
 
 services:
+  backend:
+      image: ecr-g1mg04-backend
+      build: 
+        context: ./backend
+        dockerfile: Dockerfile
+      container_name: ecr-g1mg04-backend
+      ports:
+        - "8000:8000"
+      volumes:
+        - ./backend:/app
+      command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      networks:
+        - app-network
+
+      healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+
   frontend:
       image: ecr-g1mg04-frontend
       build:
@@ -17,7 +39,7 @@ services:
         - /app/node_modules 
       networks:
         - app-network
-
+  
 
 networks:
   app-network:

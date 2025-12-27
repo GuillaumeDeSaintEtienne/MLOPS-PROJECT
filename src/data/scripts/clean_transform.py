@@ -86,6 +86,8 @@ def transform_all_data():
             output_path = DATA_DIR / f"cleaned_{label}.csv"
             df_cleaned.to_csv(output_path, index=False)
             print(f"Fichier final sauvegardé : {output_path}")
+        else:
+            print(f"Fichier {path} non trouvé. Veuillez vérifier le chemin.")
 
 if __name__ == "__main__":
     transform_all_data()
