@@ -6,7 +6,7 @@ _model = None
 
 def load_model():
     global _model
-    model_path = Path("Backend/best_model.joblib") 
+    model_path = Path("Backend/app/model/best_model.joblib") 
     
     if model_path.exists():
         _model = joblib.load(model_path)

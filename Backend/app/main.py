@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Credit Score API")
 
-origins = ["http://localhost:8080", "http://localhost:3000"]
+origins = ["http://localhost:8080", "http://localhost:3000", "*"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
