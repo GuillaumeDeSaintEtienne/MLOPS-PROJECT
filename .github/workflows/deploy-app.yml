@@ -3,6 +3,10 @@ name: Deploy Full App to AWS
 on:
   push:
     branches: [ main ]
+    # Le workflow se déclenche si l'un de ces deux dossiers est touché
+    paths:
+      - 'Backend/**'
+      - 'Frontend/**'
 
 jobs:
   build-and-push:
@@ -11,6 +15,17 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+
+      # --- ÉTAPE DE DÉTECTION DES CHANGEMENTS ---
+      - name: Check for changes in folders
+        id: filter
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            backend:
+              - 'Backend/**'
+            frontend:
+              - 'Frontend/**'
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -23,24 +38,24 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-        # --- BACKEND : Build, Tag et Push ---
+      # --- BACKEND : Ne tourne que si le dossier Backend a changé ---
       - name: Build and Push Backend
+        if: steps.filter.outputs.backend == 'true'
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.ECR_BACKEND_REPO }} 
           IMAGE_TAG: latest
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Backend/Dockerfile .
-          
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      # --- FRONTEND : Build, Tag et Push ---
+      # --- FRONTEND : Ne tourne que si le dossier Frontend a changé ---
       - name: Build and Push Frontend
+        if: steps.filter.outputs.frontend == 'true'
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.ECR_FRONTEND_REPO }}
           IMAGE_TAG: latest
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Frontend/Dockerfile ./Frontend
-          
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
