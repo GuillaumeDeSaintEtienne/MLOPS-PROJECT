@@ -87,7 +87,7 @@ const Simulator = () => {
                             <span className="font-mono text-blue-600 bg-blue-50 px-2 rounded">${simData.Annual_Income}</span>
                         </div>
                         <input 
-                            type="range" min="10000" max="150000" step="1000"
+                            type="range" min="10000" max="500000" step="1000"
                             className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
                             value={simData.Annual_Income} 
                             onChange={(e) => setSimData({...simData, Annual_Income: e.target.value})} 
@@ -105,7 +105,7 @@ const Simulator = () => {
                             <span className="font-mono text-red-600 bg-red-50 px-2 rounded">${simData.Outstanding_Debt}</span>
                         </div>
                         <input 
-                            type="range" min="0" max="5000" step="100"
+                            type="range" min="0" max="50000" step="100"
                             className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-red-500"
                             value={simData.Outstanding_Debt} 
                             onChange={(e) => setSimData({...simData, Outstanding_Debt: e.target.value})} 

@@ -6,7 +6,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     allowedHosts: [
-      'xsiipwhc5v.eu-west-3.awsapprunner.com'
+      'xsiipwhc5v.eu-west-3.awsapprunner.com',
+      'umvpvxmfsv.eu-west-3.awsapprunner.com'
     ],
     host: true,
     port: 8080
