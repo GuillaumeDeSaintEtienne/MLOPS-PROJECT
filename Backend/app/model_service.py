@@ -19,15 +19,10 @@ def make_prediction(input_data):
         raise Exception("Model is not loaded.")
     
     data_dict = input_data.dict()
-    
     data_dict["Num_Credit_Card"] = data_dict.pop("Num_Credit_Cards")
-    
-    data_dict["Credit_History_Months"] = data_dict.pop("Credit_History_Age")
-
-    data_dict["Month"] = "January"      
-    data_dict["Occupation"] = "Other"    
+    data_dict["Credit_History_Months"] = data_dict.pop("Credit_History_Age") * 12
     
     input_df = pd.DataFrame([data_dict])
-    
     result = _model.predict(input_df)
+
     return result[0]
