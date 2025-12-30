@@ -29,4 +29,4 @@ app.include_router(router)
 def startup_event():
     logger.info("🚀 Starting up...")
     load_model()
-    logger.info("✅ Ready!")
+    logger.info("✅ Ready!  ")
