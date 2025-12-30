@@ -37,7 +37,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # --- ÉTAPE AJOUTÉE : Télécharger le modèle depuis S3 ---
       - name: Download Model from S3
         if: ${{ steps.filter.outputs.backend == 'true' || github.event_name == 'workflow_run' }}
         run: |
@@ -49,7 +48,6 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      # --- BACKEND : Le build inclura maintenant le modèle téléchargé ---
       - name: Build and Push Backend
         if: ${{ steps.filter.outputs.backend == 'true' || github.event_name == 'workflow_run' }}
         env:
@@ -60,7 +58,6 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Backend/Dockerfile .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      # --- FRONTEND ---
       - name: Build and Push Frontend
         if: steps.filter.outputs.frontend == 'true'
         env:
