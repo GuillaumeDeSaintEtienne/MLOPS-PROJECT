@@ -18,7 +18,6 @@ class CreditScoreInput(BaseModel):
     Changed_Credit_Limit: float = 10.0
     Num_Credit_Inquiries: float = 5.0
     
-    # [!] These caused the crash. Changed from Int to String:
     Credit_Mix: str = "Standard"                
     Payment_of_Min_Amount: str = "No"           
     Payment_Behaviour: str = "Low_spent_Small_value_payments" 
