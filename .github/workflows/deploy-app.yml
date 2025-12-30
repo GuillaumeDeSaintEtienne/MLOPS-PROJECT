@@ -6,7 +6,7 @@ on:
     paths:
       - 'Backend/**'
       - 'Frontend/**'
-  # --- AJOUT : Déclenchement automatique après le training ---
+  # Déclenchement automatique après le succès du training
   workflow_run:
     workflows: ["Model Training Pipeline (CT)"]
     types: [completed]
@@ -15,7 +15,6 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    # On ne lance le job que si c'est un push OU si le training a réussi
     if: ${{ github.event_name == 'push' || github.event.workflow_run.conclusion == 'success' }}
     
     steps:
@@ -43,7 +42,7 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      # --- BACKEND : On build si le code a changé OU si le training vient de finir ---
+      # --- SECTION BACKEND ---
       - name: Build and Push Backend
         if: ${{ steps.filter.outputs.backend == 'true' || github.event_name == 'workflow_run' }}
         env:
@@ -54,7 +53,26 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Backend/Dockerfile .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      - name: Update ECS Service
+      - name: Deploy Backend to App Runner
         if: ${{ steps.filter.outputs.backend == 'true' || github.event_name == 'workflow_run' }}
         run: |
-          aws ecs update-service --cluster ton-nom-de-cluster --service ton-nom-de-service --force-new-deployment
+          # On récupère l'ARN via le nom du service
+          SERVICE_ARN=$(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='service-backend-g1-mg04'].ServiceArn" --output text)
+          aws apprunner start-deployment --service-arn $SERVICE_ARN
+
+      # --- SECTION FRONTEND ---
+      - name: Build and Push Frontend
+        if: ${{ steps.filter.outputs.frontend == 'true' }}
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.ECR_FRONTEND_REPO }}
+          IMAGE_TAG: latest
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Frontend/Dockerfile ./Frontend
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Deploy Frontend to App Runner
+        if: ${{ steps.filter.outputs.frontend == 'true' }}
+        run: |
+          SERVICE_ARN=$(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='service-frontend-g1-mg04'].ServiceArn" --output text)
+          aws apprunner start-deployment --service-arn $SERVICE_ARN
