@@ -17,7 +17,7 @@ from sklearn.metrics import classification_report, accuracy_score
 # --- Configuration des chemins ---
 DATA_PATH = Path("src/data/datasets/cleaned_train.csv")
 MODEL_DIR = Path("src/model/models")
-MODEL_PATH = MODEL_DIR / "credit_score_model.joblib"
+MODEL_PATH = MODEL_DIR / "best_model.joblib"
 
 # --- Configuration du Logging ---
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
@@ -94,7 +94,7 @@ def train_model():
     # 9. Upload S3
     bucket_name = os.environ.get('S3_BUCKET_NAME')
     if bucket_name:
-        s3_key = "models/credit_score_model.joblib"
+        s3_key = "models/best_model.joblib"
         upload_model_to_s3(MODEL_PATH, bucket_name, s3_key)
     else:
         logger.warning("⚠️ Variable S3_BUCKET_NAME manquante.")
