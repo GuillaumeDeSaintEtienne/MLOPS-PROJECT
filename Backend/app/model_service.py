@@ -55,3 +55,4 @@ def make_prediction(input_data):
     result = _model.predict(input_df)
 
     return result[0]
+
